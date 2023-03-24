@@ -24,23 +24,6 @@ enum SecItem {
         }
     }
 
-    static func update(query: Attributes, attributesToUpdate: Attributes) async throws {
-        trace("SecItem.update query: \(query) attributesToUpdate: \(attributesToUpdate)")
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            queue.async {
-                let status = SecItemUpdate(query.cfDictionary, attributesToUpdate.cfDictionary)
-                guard status == errSecSuccess else {
-                    trace("SecItem.update failed: \(status)")
-                    continuation.resume(throwing: error(with: status))
-                    return
-                }
-
-                trace("SecItem.update succeeded")
-                continuation.resume()
-            }
-        }
-    }
-
     static func delete(query: Attributes) async throws {
         trace("SecItem.delete query: \(query)")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in

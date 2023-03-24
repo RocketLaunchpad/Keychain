@@ -34,31 +34,33 @@ public struct Keychain {
         withAccessibility accessibility: Accessibility? = nil,
         isSynchronizable synchronizable: Bool = false
     ) async throws {
-        if try await containsItem(for: key) {
-            trace("set \(data.map({ String(format: "0x%02X", $0) }).joined(separator: " ")) for \(key) - update")
+        // Initial implementation did:
+        //
+        // if try await containsItem(for: key) {
+        //     try await SecItem.update(query:attributesToUpdate:)
+        // }
+        // else {
+        //     try await SecItem.add(attributes:)
+        // }
+        //
+        // This works on iOS but fails on macOS.
+        //
+        // Changing the implementation to delete (succeeds even if the query
+        // finds no items) then add, which works on iOS and macOS.
 
-            let query = commonAttributes
-                .merging(with: key.attributes)
+        let query = commonAttributes
+            .merging(with: key.attributes)
 
-            let update = (accessibility?.attributes ?? [:])
-                .adding(key: kSecAttrSynchronizable, boolValue: synchronizable)
-                .adding(key: kSecValueData, value: data)
-                .adding(key: kSecUseDataProtectionKeychain, boolValue: true)
+        try await SecItem.delete(query: query)
 
-            try await SecItem.update(query: query, attributesToUpdate: update)
-        }
-        else {
-            trace("set \(data.map({ String(format: "0x%02X", $0) }).joined(separator: " ")) for \(key) - add")
+        let create = commonAttributes
+            .merging(with: key.attributes)
+            .merging(with: accessibility?.attributes)
+            .adding(key: kSecAttrSynchronizable, boolValue: synchronizable)
+            .adding(key: kSecValueData, value: data)
+            .adding(key: kSecUseDataProtectionKeychain, boolValue: true)
 
-            let create = commonAttributes
-                .merging(with: key.attributes)
-                .merging(with: accessibility?.attributes)
-                .adding(key: kSecAttrSynchronizable, boolValue: synchronizable)
-                .adding(key: kSecValueData, value: data)
-                .adding(key: kSecUseDataProtectionKeychain, boolValue: true)
-
-            try await SecItem.add(attributes: create)
-        }
+        try await SecItem.add(attributes: create)
     }
 
     public func data(for key: Key) async throws -> Data? {
