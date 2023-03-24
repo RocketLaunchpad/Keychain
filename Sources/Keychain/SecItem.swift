@@ -25,6 +25,7 @@
 
 import Foundation
 
+/// Internal functions to call SecItem functions asynchronously on a queue.
 enum SecItem {
     static let queue: DispatchQueue = DispatchQueue(label: "SecItem async queue")
 

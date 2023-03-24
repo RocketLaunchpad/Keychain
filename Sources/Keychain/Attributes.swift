@@ -25,34 +25,34 @@
 
 import Foundation
 
+/// Internal data structure to building and converting attribute dictionaries.
 struct Attributes: ExpressibleByDictionaryLiteral {
-    var dictionary: [String: Any]
+    var dictionary: [CFString: Any]
 
-    init(dictionaryLiteral elements: (String, Any)...) {
-        var dictionary = [String: Any]()
+    init(dictionaryLiteral elements: (CFString, Any)...) {
+        var dictionary = [CFString: Any]()
         for (key, value) in elements {
             dictionary[key] = value
         }
         self.dictionary = dictionary
     }
 
-    mutating func merge(with other: Attributes?) {
-        guard let other else { return }
+    mutating func add(_ other: Attributes) {
         dictionary.merge(other.dictionary, uniquingKeysWith: { $1 })
     }
 
-    func merging(with other: Attributes?) -> Attributes {
+    func adding(_ other: Attributes) -> Attributes {
         var copy = self
-        copy.merge(with: other)
+        copy.add(other)
         return copy
     }
 
     mutating func add(key: CFString, value: Any) {
-        dictionary[String(key)] = value
+        dictionary[key] = value
     }
 
     mutating func add(key: CFString, boolValue value: Bool) {
-        dictionary[String(key)] = (value ? kCFBooleanTrue : kCFBooleanFalse) as Any
+        dictionary[key] = (value ? kCFBooleanTrue : kCFBooleanFalse) as Any
     }
 
     func adding(key: CFString, value: Any) -> Attributes {
@@ -71,4 +71,3 @@ struct Attributes: ExpressibleByDictionaryLiteral {
         dictionary as CFDictionary
     }
 }
-

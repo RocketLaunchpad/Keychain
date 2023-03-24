@@ -32,7 +32,7 @@ final class KeychainTests: XCTestCase {
     override func setUpWithError() throws {
         super.setUp()
 
-        let service = UUID().uuidString
+        let service = "KeychainTests-\(UUID().uuidString)"
         keychain = Keychain(service: service)
     }
 
@@ -96,15 +96,11 @@ final class KeychainTests: XCTestCase {
     func testUpdate() async throws {
         let key: Key = "key"
 
-        NSLog("set value=value1 for key")
         try await keychain.set(string: "value1", for: key)
-        NSLog("get value for key")
         let v1 = try await keychain.string(for: key)
         XCTAssertEqual("value1", v1)
 
-        NSLog("set value=value2 for key")
         try await keychain.set(string: "value2", for: key)
-        NSLog("get value for key")
         let v2 = try await keychain.string(for: key)
         XCTAssertEqual("value2", v2)
     }
@@ -154,25 +150,87 @@ final class KeychainTests: XCTestCase {
         try await keychain.removeAllItems()
         let allKeys = try await keychain.allKeys
         XCTAssertEqual([], allKeys)
-
-        print("done")
     }
 
-    func testAccessibilityWhenPasscodeSetThisDeviceOnly() async throws {
-        let key: Key = "key"
-        try await keychain.set(string: "value", for: key, withAccessibility: .whenPasscodeSetThisDeviceOnly)
+    func testAllAccessibilityOptionsSeparateKeys() async throws {
+        let allAccessibilities: [Accessibility] = [
+            .whenPasscodeSetThisDeviceOnly,
+            .whenUnlockedThisDeviceOnly,
+            .whenUnlocked(isSynchronizable: true),
+            .whenUnlocked(isSynchronizable: false),
+            .afterFirstUnlockThisDeviceOnly,
+            .afterFirstUnlock(isSynchronizable: true),
+            .afterFirstUnlock(isSynchronizable: false),
+        ]
 
-        let rawItem = try XCTUnwrap(fetchRawItem(service: keychain.service, account: "key"))
-        XCTAssertEqual(rawItem[String(kSecAttrAccessible)] as? String, String(kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly))
+        var iteration = 0
+        for accessibility in allAccessibilities {
+            try await set(
+                value: "value-\(iteration)",
+                for: Key(rawValue: "key-\(iteration)"),
+                withAccessibility: accessibility,
+                assertAccessibleAttributeEqualTo: accessibility.kSecAttrAccessibleAttributeValue,
+                assertSynchronizableAttributeEqualTo: accessibility.isSynchronizable ?? false
+            )
+            iteration += 1
+        }
+    }
+
+    func testAllAccessibilityOptionsSameKeys() async throws {
+        let allAccessibilities: [Accessibility] = [
+            .whenPasscodeSetThisDeviceOnly,
+            .whenUnlockedThisDeviceOnly,
+            .whenUnlocked(isSynchronizable: true),
+            .whenUnlocked(isSynchronizable: false),
+            .afterFirstUnlockThisDeviceOnly,
+            .afterFirstUnlock(isSynchronizable: true),
+            .afterFirstUnlock(isSynchronizable: false),
+        ]
+
+        let key = Key("key")
+        for accessibility in allAccessibilities {
+            try await set(
+                value: "value",
+                for: key,
+                withAccessibility: accessibility,
+                assertAccessibleAttributeEqualTo: accessibility.kSecAttrAccessibleAttributeValue,
+                assertSynchronizableAttributeEqualTo: accessibility.isSynchronizable ?? false
+            )
+        }
+    }
+
+    private func set(
+        value: String,
+        for key: Key,
+        withAccessibility accessibility: Accessibility,
+        assertAccessibleAttributeEqualTo expectedAccessibility: CFString,
+        assertSynchronizableAttributeEqualTo expectedSynchronizable: Bool,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) async throws {
+        try await keychain.set(string: value, for: key, withAccessibility: accessibility)
+
+        let rawItem = try XCTUnwrap(fetchRawItem(service: keychain.service, account: key.rawValue))
+
+        let actualAccessibility = rawItem[kSecAttrAccessible] as? String
+        XCTAssertEqual(actualAccessibility,
+                       String(expectedAccessibility),
+                       file: file, line: line)
+
+        let actualSynchronizable = rawItem[kSecAttrSynchronizable] as? NSNumber
+        XCTAssertEqual(actualSynchronizable?.boolValue,
+                       expectedSynchronizable,
+                       file: file, line: line)
     }
 
     private func fetchRawItem(service: String, account: String) -> [AnyHashable: Any]? {
-        let query: [String: Any] = [
-            String(kSecAttrService): service,
-            String(kSecClass): kSecClassGenericPassword,
-            String(kSecAttrSynchronizable): kSecAttrSynchronizableAny,
-            String(kSecReturnAttributes): kCFBooleanTrue as Any,
-            String(kSecMatchLimit): kSecMatchLimitOne,
+        let query: [CFString: Any] = [
+            kSecAttrService: service,
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrAccount: account,
+            kSecAttrSynchronizable: kSecAttrSynchronizableAny,
+            kSecReturnAttributes: kCFBooleanTrue as Any,
+            kSecMatchLimit: kSecMatchLimitOne,
         ]
 
         var result: AnyObject?

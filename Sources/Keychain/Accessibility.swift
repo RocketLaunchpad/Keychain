@@ -25,27 +25,75 @@
 
 import Foundation
 
+///
+/// Specifies when the keychain item is accessible and whether it is
+/// synchronizable.
+///
+/// The cases of this enum correspond to values of the `kSecAttrAccessible`
+/// attribute. The `synchronizable` option (`kSecAttrSynchronizable`) is only
+/// provided for accessibility options where it makes sense (i.e., options that
+/// do not specify "this device only"). This is consistent with the
+/// documentation for `kSecAttrSynchronizable`, which states:
+///
+/// > Items stored or obtained using the `kSecAttrSynchronizable` key may not
+/// also specify a `kSecAttrAccessible` value that is incompatible with syncing
+/// (namely, those whose names end with ThisDeviceOnly).
+///
 public enum Accessibility {
+
+    /// See `kSecAttrWhenPasscodeSetThisDeviceOnly` for details.
     case whenPasscodeSetThisDeviceOnly
+
+    /// See `kSecAttrWhenUnlockedThisDeviceOnly` for details.
     case whenUnlockedThisDeviceOnly
-    case whenUnlocked
+
+    /// See `kSecAttrAfterFirstUnlockThisDeviceOnly` for details.
     case afterFirstUnlockThisDeviceOnly
-    case afterFirstUnlock
+
+    /// See `kSecAttrWhenUnlocked` for details. The `isSynchronizable` value is
+    /// used for the `kSecAttrSynchronizable` attribute value.
+    case whenUnlocked(isSynchronizable: Bool)
+
+    /// See `kSecAttrAfterFirstUnlock` for details. The `isSynchronizable` value
+    /// is used for the `kSecAttrSynchronizable` attribute value.
+    case afterFirstUnlock(isSynchronizable: Bool)
 
     var attributes: Attributes {
-        [String(kSecAttrAccessible): attributeValue]
+        let attributes: Attributes = [kSecAttrAccessible: kSecAttrAccessibleAttributeValue]
+
+        if let isSynchronizable {
+            return attributes
+                .adding(key: kSecAttrSynchronizable, boolValue: isSynchronizable)
+        }
+        else {
+            return attributes
+        }
     }
 
-    private var attributeValue: CFString {
+    var isSynchronizable: Bool? {
+        switch self {
+        case let .whenUnlocked(isSynchronizable), let .afterFirstUnlock(isSynchronizable):
+            return isSynchronizable
+
+        default:
+            return nil
+        }
+    }
+
+    var kSecAttrAccessibleAttributeValue: CFString {
         switch self {
         case .whenPasscodeSetThisDeviceOnly:
             return kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
+
         case .whenUnlockedThisDeviceOnly:
             return kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+
         case .whenUnlocked:
             return kSecAttrAccessibleWhenUnlocked
+
         case .afterFirstUnlockThisDeviceOnly:
             return kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+
         case .afterFirstUnlock:
             return kSecAttrAccessibleAfterFirstUnlock
         }

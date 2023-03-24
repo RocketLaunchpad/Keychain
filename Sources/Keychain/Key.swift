@@ -25,10 +25,13 @@
 
 import Foundation
 
+/// Represents a keychain key with which keychain items are associated.
 public struct Key: ExpressibleByStringLiteral, Hashable {
+
+    /// The key name. This is used as the `kSecAttrAccount` value.
     public let rawValue: String
 
-    public init(_ rawValue: String) {
+    public init(rawValue: String) {
         self.rawValue = rawValue
     }
 
@@ -37,8 +40,6 @@ public struct Key: ExpressibleByStringLiteral, Hashable {
     }
 
     var attributes: Attributes {
-        [
-            String(kSecAttrAccount): rawValue
-        ]
+        [kSecAttrAccount: rawValue]
     }
 }

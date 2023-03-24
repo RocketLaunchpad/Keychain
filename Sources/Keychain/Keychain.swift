@@ -41,12 +41,17 @@ public struct Keychain {
         NSError(domain: NSOSStatusErrorDomain, code: Int(status))
     }
 
-    private var commonAttributes: Attributes {
+    private var queryForAll: Attributes {
         [
-            String(kSecAttrService): service,
-            String(kSecClass): itemClass,
-            String(kSecAttrSynchronizable): kSecAttrSynchronizableAny,
+            kSecAttrService: service,
+            kSecClass: itemClass,
+            kSecAttrSynchronizable: kSecAttrSynchronizableAny,
         ]
+    }
+
+    private func query(for key: Key) -> Attributes {
+        queryForAll
+            .adding(key.attributes)
     }
 
     public func containsItem(for key: Key) async throws -> Bool {
@@ -56,32 +61,16 @@ public struct Keychain {
     public func set(
         data: Data,
         for key: Key,
-        withAccessibility accessibility: Accessibility? = nil,
-        isSynchronizable synchronizable: Bool = false
+        withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly
     ) async throws {
-        // Initial implementation did:
-        //
-        // if try await containsItem(for: key) {
-        //     try await SecItem.update(query:attributesToUpdate:)
-        // }
-        // else {
-        //     try await SecItem.add(attributes:)
-        // }
-        //
-        // This works on iOS but fails on macOS.
-        //
-        // Changing the implementation to delete (succeeds even if the query
-        // finds no items) then add, which works on iOS and macOS.
+        // Rather than add and then update if add fails with errSecDuplicateItem,
+        // we just delete then add.
 
-        let query = commonAttributes
-            .merging(with: key.attributes)
+        let delete = query(for: key)
+        try await SecItem.delete(query: delete)
 
-        try await SecItem.delete(query: query)
-
-        let create = commonAttributes
-            .merging(with: key.attributes)
-            .merging(with: accessibility?.attributes)
-            .adding(key: kSecAttrSynchronizable, boolValue: synchronizable)
+        let create = query(for: key)
+            .adding(accessibility.attributes)
             .adding(key: kSecValueData, value: data)
             .adding(key: kSecUseDataProtectionKeychain, boolValue: true)
 
@@ -89,8 +78,7 @@ public struct Keychain {
     }
 
     public func data(for key: Key) async throws -> Data? {
-        let query = commonAttributes
-            .merging(with: key.attributes)
+        let query = query(for: key)
             .adding(key: kSecMatchLimit, value: kSecMatchLimitOne)
             .adding(key: kSecReturnData, boolValue: true)
 
@@ -99,7 +87,7 @@ public struct Keychain {
 
     public var allKeys: Set<Key> {
         get async throws {
-            let query = commonAttributes
+            let query = queryForAll
                 .adding(key: kSecMatchLimit, value: kSecMatchLimitAll)
                 .adding(key: kSecReturnAttributes, boolValue: true)
 
@@ -110,7 +98,7 @@ public struct Keychain {
             var keys = Set<Key>()
             for attributes in results {
                 if let account = attributes[kSecAttrAccount] as? String {
-                    keys.insert(Key(account))
+                    keys.insert(Key(rawValue: account))
                 }
             }
             return keys
@@ -118,14 +106,12 @@ public struct Keychain {
     }
 
     public func removeItem(for key: Key) async throws {
-        let query = commonAttributes
-            .merging(with: key.attributes)
-
+        let query = query(for: key)
         try await SecItem.delete(query: query)
     }
 
     public func removeAllItems() async throws {
-        let query = commonAttributes
+        let query = queryForAll
         try await SecItem.delete(query: query)
     }
 }
@@ -139,43 +125,21 @@ public extension Keychain {
         }
     }
 
-    func set(
-        string: String,
-        for key: Key,
-        withAccessibility accessibility: Accessibility? = nil,
-        isSynchronizable synchronizable: Bool = false
-    ) async throws {
-        try await set(
-            data: Data(string.utf8),
-            for: key,
-            withAccessibility: accessibility,
-            isSynchronizable: synchronizable
-        )
+    func set(string: String, for key: Key, withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly) async throws {
+        try await set(data: Data(string.utf8), for: key, withAccessibility: accessibility)
     }
 }
 
 // MARK: - Encodable/Decodable value accessors
 
 public extension Keychain {
-    func value<T>(for key: Key) async throws -> T?
-    where T: Decodable {
+    func value<T>(for key: Key) async throws -> T? where T: Decodable {
         try await data(for: key).map {
             try JSONDecoder().decode(T.self, from: $0)
         }
     }
 
-    func set<T>(
-        value: T,
-        for key: Key,
-        withAccessibility accessibility: Accessibility? = nil,
-        isSynchronizable synchronizable: Bool = false
-    ) async throws
-    where T: Encodable {
-        try await set(
-            data: try JSONEncoder().encode(value),
-            for: key,
-            withAccessibility: accessibility,
-            isSynchronizable: synchronizable
-        )
+    func set<T>(value: T, for key: Key, withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly) async throws where T: Encodable {
+        try await set(data: try JSONEncoder().encode(value), for: key, withAccessibility: accessibility)
     }
 }
