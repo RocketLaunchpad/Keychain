@@ -37,6 +37,8 @@ final class KeychainTests: XCTestCase {
         try await keychain.removeItem(for: key)
         let containsAfterRemove = try await keychain.containsItem(for: key)
         XCTAssertFalse(containsAfterRemove)
+
+        print("done")
     }
 
     func testAllKeys() async throws {
@@ -111,6 +113,8 @@ final class KeychainTests: XCTestCase {
         try await keychain.removeAllItems()
         let allKeys = try await keychain.allKeys
         XCTAssertEqual([], allKeys)
+
+        print("done")
     }
 
     func testAccessibilityWhenPasscodeSetThisDeviceOnly() async throws {

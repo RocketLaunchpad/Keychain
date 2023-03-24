@@ -95,8 +95,6 @@ public struct Keychain {
 
     public func removeAllItems() async throws {
         let query = commonAttributes
-            .adding(key: kSecMatchLimit, value: kSecMatchLimitAll)
-
         try await SecItem.delete(query: query)
     }
 }
