@@ -7,12 +7,6 @@ enum SecItem {
         NSError(domain: NSOSStatusErrorDomain, code: Int(status))
     }
 
-    private static func trace(_ message: @autoclosure () -> String) {
-        #if DEBUG
-        NSLog(message())
-        #endif
-    }
-
     static func add(attributes: Attributes) async throws {
         trace("SecItem.add attributes: \(attributes)")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in

@@ -35,6 +35,8 @@ public struct Keychain {
         isSynchronizable synchronizable: Bool = false
     ) async throws {
         if try await containsItem(for: key) {
+            trace("set \(data.map({ String(format: "0x%02X", $0) }).joined(separator: " ")) for \(key) - update")
+
             let query = commonAttributes
                 .merging(with: key.attributes)
 
@@ -46,6 +48,8 @@ public struct Keychain {
             try await SecItem.update(query: query, attributesToUpdate: update)
         }
         else {
+            trace("set \(data.map({ String(format: "0x%02X", $0) }).joined(separator: " ")) for \(key) - add")
+
             let create = commonAttributes
                 .merging(with: key.attributes)
                 .merging(with: accessibility?.attributes)

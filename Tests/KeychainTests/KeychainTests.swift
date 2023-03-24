@@ -69,6 +69,22 @@ final class KeychainTests: XCTestCase {
     }
 
     func testUpdate() async throws {
+        let key: Key = "key"
+
+        NSLog("set value=value1 for key")
+        try await keychain.set(string: "value1", for: key)
+        NSLog("get value for key")
+        let v1 = try await keychain.string(for: key)
+        XCTAssertEqual("value1", v1)
+
+        NSLog("set value=value2 for key")
+        try await keychain.set(string: "value2", for: key)
+        NSLog("get value for key")
+        let v2 = try await keychain.string(for: key)
+        XCTAssertEqual("value2", v2)
+    }
+
+    func testUpdateTwo() async throws {
         let key1: Key = "key1"
         let key2: Key = "key2"
 
