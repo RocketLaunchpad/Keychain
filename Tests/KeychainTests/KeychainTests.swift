@@ -185,3 +185,44 @@ final class KeychainTests: XCTestCase {
         return result as? [AnyHashable: Any]
     }
 }
+
+// MARK: - README sample code
+
+extension Key {
+    static let aSecretMessage: Key = "aSecretMessage"
+    static let aSecretValue: Key = "aSecretValue"
+}
+
+extension KeychainTests {
+
+    func testReadmeDemo1() async throws {
+        // Write to the keychain
+        try await keychain.set(string: "Be sure to drink your Ovaltine", for: .aSecretMessage)
+
+        // Read from the keychain
+        let secretMessage = try await keychain.string(for: .aSecretMessage)
+        XCTAssertEqual(secretMessage, "Be sure to drink your Ovaltine")
+
+        // Delete from the keychain
+        try await keychain.removeItem(for: .aSecretMessage)
+    }
+
+    struct UserDetails: Codable, Equatable {
+        var username: String
+        var password: String
+    }
+
+    func testReadmeDemo2() async throws {
+        let user = UserDetails(username: "ralphie", password: "RedRyder123")
+
+        // Write to the keychain
+        try await keychain.set(value: user, for: .aSecretValue)
+
+        // Read from the keychain
+        let returningUser: UserDetails? = try await keychain.value(for: .aSecretValue)
+        XCTAssertEqual(user, returningUser)
+
+        // Delete from the keychain
+        try await keychain.removeItem(for: .aSecretValue)
+    }
+}
