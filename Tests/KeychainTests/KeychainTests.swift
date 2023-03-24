@@ -11,94 +11,132 @@ final class KeychainTests: XCTestCase {
         keychain = Keychain(service: service)
     }
 
-    override func tearDownWithError() throws {
-        try keychain.removeAllItems()
-
-        super.tearDown()
+    override func tearDown() async throws {
+        try await keychain.removeAllItems()
+        try await super.tearDown()
     }
 
-    func testAddThenGet() throws {
-        let key: Keychain.Key = "addThenGet"
+    func testAddThenGet() async throws {
+        let key: Key = "addThenGet"
 
         // Add an item
-        try keychain.set(value: "value", for: key)
+        try await keychain.set(string: "value", for: key)
 
         // Get the item
-        XCTAssertEqual("value", try keychain.value(for: key))
+        let value = try await keychain.string(for: key)
+        XCTAssertEqual("value", value)
     }
 
-    func testAddThenDelete() throws {
-        let key: Keychain.Key = "addThenDelete"
+    func testAddThenDelete() async throws {
+        let key: Key = "addThenDelete"
 
-        try keychain.set(value: "value", for: key)
-        XCTAssertTrue(try keychain.containsItem(for: key))
+        try await keychain.set(string: "value", for: key)
+        let containsAfterSet = try await keychain.containsItem(for: key)
+        XCTAssertTrue(containsAfterSet)
 
-        try keychain.removeItem(for: key)
-        XCTAssertFalse(try keychain.containsItem(for: key))
+        try await keychain.removeItem(for: key)
+        let containsAfterRemove = try await keychain.containsItem(for: key)
+        XCTAssertFalse(containsAfterRemove)
     }
 
-    func testAllKeys() throws {
-        let key1: Keychain.Key = "key1"
-        let key2: Keychain.Key = "key2"
+    func testAllKeys() async throws {
+        let key1: Key = "key1"
+        let key2: Key = "key2"
 
-        try keychain.set(value: "value1", for: key1)
-        try keychain.set(value: "value2", for: key2)
+        try await keychain.set(string: "value1", for: key1)
+        try await keychain.set(string: "value2", for: key2)
 
-        XCTAssertEqual([key1, key2], try keychain.allKeys)
+        let allKeys = try await keychain.allKeys
+        XCTAssertEqual([key1, key2], allKeys)
     }
 
-    func testAllKeysAfterDelete() throws {
-        let key1: Keychain.Key = "key1"
-        let key2: Keychain.Key = "key2"
+    func testAllKeysAfterRemove() async throws {
+        let key1: Key = "key1"
+        let key2: Key = "key2"
 
-        try keychain.set(value: "value1", for: key1)
-        try keychain.set(value: "value2", for: key2)
+        try await keychain.set(string: "value1", for: key1)
+        try await keychain.set(string: "value2", for: key2)
 
-        XCTAssertEqual([key1, key2], try keychain.allKeys)
+        let allKeysBeforeRemove = try await keychain.allKeys
+        XCTAssertEqual([key1, key2], allKeysBeforeRemove)
 
-        try keychain.removeItem(for: key1)
+        try await keychain.removeItem(for: key1)
 
-        XCTAssertEqual([key2], try keychain.allKeys)
+        let allKeysAfterRemove = try await keychain.allKeys
+        XCTAssertEqual([key2], allKeysAfterRemove)
     }
 
-    func testUpdate() throws {
-        let key1: Keychain.Key = "key1"
-        let key2: Keychain.Key = "key2"
+    func testUpdate() async throws {
+        let key1: Key = "key1"
+        let key2: Key = "key2"
 
-        try keychain.set(value: "value1", for: key1)
-        try keychain.set(value: "value2", for: key2)
+        try await keychain.set(string: "value1", for: key1)
+        try await keychain.set(string: "value2", for: key2)
 
-        XCTAssertEqual("value1", try keychain.value(for: key1))
-        XCTAssertEqual("value2", try keychain.value(for: key2))
+        let v1 = try await keychain.string(for: key1)
+        XCTAssertEqual("value1", v1)
+        let v2 = try await keychain.string(for: key2)
+        XCTAssertEqual("value2", v2)
 
-        try keychain.set(value: "value3", for: key1)
-        try keychain.set(value: "value4", for: key2)
+        try await keychain.set(string: "value3", for: key1)
+        try await keychain.set(string: "value4", for: key2)
 
-        XCTAssertEqual("value3", try keychain.value(for: key1))
-        XCTAssertEqual("value4", try keychain.value(for: key2))
+        let v3 = try await keychain.string(for: key1)
+        XCTAssertEqual("value3", v3)
+        let v4 = try await keychain.string(for: key2)
+        XCTAssertEqual("value4", v4)
     }
 
-    func testFetchAfterDelete() throws {
-        let key: Keychain.Key = "updateAfterDelete"
+    func testFetchAfterDelete() async throws {
+        let key: Key = "updateAfterDelete"
 
-        try keychain.set(value: "value1", for: key)
-        XCTAssertEqual("value1", try keychain.value(for: key))
+        try await keychain.set(string: "value1", for: key)
+        let v1 = try await keychain.string(for: key)
+        XCTAssertEqual("value1", v1)
 
-        try keychain.removeItem(for: key)
-        XCTAssertNil(try keychain.value(for: key) as String?)
+        try await keychain.removeItem(for: key)
+        let v2 = try await keychain.string(for: key)
+        XCTAssertNil(v2)
     }
 
-    func testDeleteAll() throws {
-        let key1: Keychain.Key = "key1"
-        let key2: Keychain.Key = "key2"
-        let key3: Keychain.Key = "key3"
+    func testDeleteAll() async throws {
+        let key1: Key = "key1"
+        let key2: Key = "key2"
+        let key3: Key = "key3"
 
-        try keychain.set(value: "value1", for: key1)
-        try keychain.set(value: "value2", for: key2)
-        try keychain.set(value: "value3", for: key3)
+        try await keychain.set(string: "value1", for: key1)
+        try await keychain.set(string: "value2", for: key2)
+        try await keychain.set(string: "value3", for: key3)
 
-        try keychain.removeAllItems()
+        try await keychain.removeAllItems()
+        let allKeys = try await keychain.allKeys
+        XCTAssertEqual([], allKeys)
+    }
 
-        XCTAssertEqual([], try keychain.allKeys)
+    func testAccessibilityWhenPasscodeSetThisDeviceOnly() async throws {
+        let key: Key = "key"
+        try await keychain.set(string: "value", for: key, withAccessibility: .whenPasscodeSetThisDeviceOnly)
+
+        let rawItem = try XCTUnwrap(fetchRawItem(service: keychain.service, account: "key"))
+        XCTAssertEqual(rawItem[String(kSecAttrAccessible)] as? String, String(kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly))
+    }
+
+    private func fetchRawItem(service: String, account: String) -> [AnyHashable: Any]? {
+        let query: [String: Any] = [
+            String(kSecAttrService): service,
+            String(kSecClass): kSecClassGenericPassword,
+            String(kSecAttrSynchronizable): kSecAttrSynchronizableAny,
+            String(kSecReturnAttributes): kCFBooleanTrue as Any,
+            String(kSecMatchLimit): kSecMatchLimitOne,
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess else {
+            return nil
+        }
+
+        return result as? [AnyHashable: Any]
     }
 }
