@@ -37,7 +37,7 @@ enum SecItem {
         trace("SecItem.add attributes: \(attributes)")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             queue.async {
-                let result = SecItemAdd(attributes.cfDictionary, nil)
+                let result = SecItemAdd(attributes.asCFDictionary, nil)
                 guard result == errSecSuccess else {
                     trace("SecItem.add failed: \(result)")
                     continuation.resume(throwing: error(with: result))
@@ -54,7 +54,7 @@ enum SecItem {
         trace("SecItem.delete query: \(query)")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             queue.async {
-                let result = SecItemDelete(query.cfDictionary)
+                let result = SecItemDelete(query.asCFDictionary)
                 guard result == errSecSuccess || result == errSecItemNotFound else {
                     trace("SecItem.delete failed: \(result)")
                     continuation.resume(throwing: error(with: result))
@@ -71,7 +71,7 @@ enum SecItem {
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T?, Error>) in
             queue.async {
                 var result: AnyObject?
-                let status = SecItemCopyMatching(query.cfDictionary, &result)
+                let status = SecItemCopyMatching(query.asCFDictionary, &result)
 
                 switch status {
                 case errSecSuccess:

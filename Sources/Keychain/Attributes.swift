@@ -37,37 +37,43 @@ struct Attributes: ExpressibleByDictionaryLiteral {
         self.dictionary = dictionary
     }
 
+    /// Adds the specified attributes, overwriting any existing keys.
     mutating func add(_ other: Attributes) {
         dictionary.merge(other.dictionary, uniquingKeysWith: { $1 })
     }
 
+    /// Adds the specified attributes, overwriting any existing keys.
     func adding(_ other: Attributes) -> Attributes {
         var copy = self
         copy.add(other)
         return copy
     }
 
+    /// Adds (and overwrites) the `value` for the `key`.
     mutating func add(key: CFString, value: Any) {
         dictionary[key] = value
     }
 
-    mutating func add(key: CFString, boolValue value: Bool) {
-        dictionary[key] = (value ? kCFBooleanTrue : kCFBooleanFalse) as Any
-    }
-
+    /// Adds (and overwrites) the `value` for the `key`.
     func adding(key: CFString, value: Any) -> Attributes {
         var copy = self
         copy.add(key: key, value: value)
         return copy
     }
 
+    /// Adds (and overwrites) the `boolValue` for the `key`.
+    mutating func add(key: CFString, boolValue value: Bool) {
+        dictionary[key] = (value ? kCFBooleanTrue : kCFBooleanFalse) as Any
+    }
+
+    /// Adds (and overwrites) the `boolValue` for the `key`.
     func adding(key: CFString, boolValue value: Bool) -> Attributes {
         var copy = self
         copy.add(key: key, boolValue: value)
         return copy
     }
 
-    var cfDictionary: CFDictionary {
+    var asCFDictionary: CFDictionary {
         dictionary as CFDictionary
     }
 }
