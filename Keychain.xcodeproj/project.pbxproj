@@ -108,13 +108,6 @@
 			path = Tests/KeychainTestsHost;
 			sourceTree = "<group>";
 		};
-		C5A44A2C29CD2142005E71B9 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		OBJ_14 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -147,11 +140,10 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
+				OBJ_20 /* README.md */,
 				OBJ_7 /* Sources */,
 				OBJ_14 /* Tests */,
 				OBJ_17 /* Products */,
-				OBJ_20 /* README.md */,
-				C5A44A2C29CD2142005E71B9 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};

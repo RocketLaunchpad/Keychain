@@ -8,9 +8,7 @@ public enum Accessibility {
     case afterFirstUnlock
 
     var attributes: Attributes {
-        [
-            String(kSecAttrAccessible): attributeValue
-        ]
+        [String(kSecAttrAccessible): attributeValue]
     }
 
     private var attributeValue: CFString {
