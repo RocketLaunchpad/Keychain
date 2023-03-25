@@ -29,7 +29,7 @@ import SwiftUI
 struct KeychainTestsHostApp: App {
     var body: some Scene {
         WindowGroup {
-            EmptyView()
+            Text("KeychainTestsHost")
         }
     }
 }

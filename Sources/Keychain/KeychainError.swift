@@ -1,5 +1,5 @@
 //
-//  SecItem.swift
+//  KeychainError.swift
 //  Keychain
 //
 //  Copyright (c) 2023 DEPT Digital Products, Inc.
@@ -25,36 +25,14 @@
 
 import Foundation
 
-/// Internal functions to call SecItem functions
-enum SecItem {
+public struct KeychainError: Error, LocalizedError {
+    init(_ status: OSStatus) {
+        let errorDescription = SecCopyErrorMessageString(status, nil) as String?
 
-    static func add(attributes: Attributes) throws {
-        let status = SecItemAdd(attributes.asCFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainError(status)
-        }
+        self.status = status
+        self.errorDescription = errorDescription ?? "OSStatus(\(status))"
     }
 
-    static func delete(query: Attributes) throws {
-        let status = SecItemDelete(query.asCFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError(status)
-        }
-    }
-
-    static func copyMatching<T>(query: Attributes) throws -> T? {
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query.asCFDictionary, &result)
-
-        switch status {
-        case errSecSuccess:
-            return result as? T
-
-        case errSecItemNotFound:
-            return nil
-
-        default:
-            throw KeychainError(status)
-        }
-    }
+    public var status: OSStatus
+    public var errorDescription: String?
 }

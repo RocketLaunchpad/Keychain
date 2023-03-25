@@ -22,13 +22,15 @@
 
 /* Begin PBXBuildFile section */
 		C5050BC329CD22B100DBB95E /* KeychainTestsHostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A44A2629CD20B3005E71B9 /* KeychainTestsHostApp.swift */; };
+		C5050BCE29CE97C100DBB95E /* AsyncKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5050BCD29CE97C100DBB95E /* AsyncKeychain.swift */; };
+		C54F319829CEA6610054FF14 /* KeychainError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54F319729CEA6610054FF14 /* KeychainError.swift */; };
 		OBJ_26 /* Accessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* Accessibility.swift */; };
 		OBJ_27 /* Attributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* Attributes.swift */; };
 		OBJ_28 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* Key.swift */; };
 		OBJ_29 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* Keychain.swift */; };
 		OBJ_30 /* SecItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* SecItem.swift */; };
 		OBJ_37 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_6 /* Package.swift */; };
-		OBJ_48 /* KeychainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* KeychainTests.swift */; };
+		OBJ_48 /* AsyncKeychainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* AsyncKeychainTests.swift */; };
 		OBJ_50 /* Keychain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "keychain::Keychain::Product" /* Keychain.framework */; };
 /* End PBXBuildFile section */
 
@@ -57,6 +59,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C5050BCD29CE97C100DBB95E /* AsyncKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncKeychain.swift; sourceTree = "<group>"; };
+		C54F319729CEA6610054FF14 /* KeychainError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeychainError.swift; sourceTree = "<group>"; };
 		C5A44A1529CD2024005E71B9 /* KeychainTestsHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeychainTestsHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5A44A2529CD20B3005E71B9 /* KeychainTestsHost.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = KeychainTestsHost.entitlements; sourceTree = "<group>"; };
 		C5A44A2629CD20B3005E71B9 /* KeychainTestsHostApp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeychainTestsHostApp.swift; sourceTree = "<group>"; };
@@ -64,7 +68,7 @@
 		OBJ_11 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		OBJ_12 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		OBJ_13 /* SecItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecItem.swift; sourceTree = "<group>"; };
-		OBJ_16 /* KeychainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainTests.swift; sourceTree = "<group>"; };
+		OBJ_16 /* AsyncKeychainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncKeychainTests.swift; sourceTree = "<group>"; };
 		OBJ_20 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		OBJ_6 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		OBJ_9 /* Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Accessibility.swift; sourceTree = "<group>"; };
@@ -120,7 +124,7 @@
 		OBJ_15 /* KeychainTests */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_16 /* KeychainTests.swift */,
+				OBJ_16 /* AsyncKeychainTests.swift */,
 			);
 			name = KeychainTests;
 			path = Tests/KeychainTests;
@@ -159,9 +163,11 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_9 /* Accessibility.swift */,
+				C5050BCD29CE97C100DBB95E /* AsyncKeychain.swift */,
 				OBJ_10 /* Attributes.swift */,
 				OBJ_11 /* Key.swift */,
 				OBJ_12 /* Keychain.swift */,
+				C54F319729CEA6610054FF14 /* KeychainError.swift */,
 				OBJ_13 /* SecItem.swift */,
 			);
 			name = Keychain;
@@ -299,7 +305,9 @@
 			buildActionMask = 0;
 			files = (
 				OBJ_26 /* Accessibility.swift in Sources */,
+				C54F319829CEA6610054FF14 /* KeychainError.swift in Sources */,
 				OBJ_27 /* Attributes.swift in Sources */,
+				C5050BCE29CE97C100DBB95E /* AsyncKeychain.swift in Sources */,
 				OBJ_28 /* Key.swift in Sources */,
 				OBJ_29 /* Keychain.swift in Sources */,
 				OBJ_30 /* SecItem.swift in Sources */,
@@ -318,7 +326,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_48 /* KeychainTests.swift in Sources */,
+				OBJ_48 /* AsyncKeychainTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

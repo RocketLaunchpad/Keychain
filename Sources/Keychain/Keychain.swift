@@ -26,11 +26,20 @@
 import Foundation
 
 /// Wraps the system keychain, providing simplified access for securely storing
-/// and retrieving `Data`, `String`, or `Codable` values.
+/// and retrieving `Data`, `String`, or `Codable` values in a synchronous
+/// (blocking) manner.
 ///
 /// Instances of this type are lightweight structs. Rather than retain them,
 /// you can recreate whenever needed, ensuring you always use the same service
 /// name.
+///
+/// You should use `Keychain` only when you need synchronous access to the
+/// keychain. This should generally occur on a background queue, as the
+/// underlying API calls (`SecItemAdd`, `SecItemCopyMatching`, and
+/// `SecItemDelete`) all block the calling thread.
+///
+/// All other times, you should consider using `AsyncKeychain` which provides
+/// an equivalent asynchronous API.
 ///
 public struct Keychain {
 
@@ -44,11 +53,6 @@ public struct Keychain {
     /// Creates a new keychain instance using the specified service name.
     public init(service: String) {
         self.service = service
-    }
-
-    /// Creates an `NSError` for the specified `OSStatus` value.
-    private func error(with status: OSStatus) -> Error {
-        NSError(domain: NSOSStatusErrorDomain, code: Int(status))
     }
 
     /// Base query attributes to return all items associated with this service
@@ -69,8 +73,8 @@ public struct Keychain {
 
     /// Returns `true` if the keychain contains an item for the given key,
     /// `false` otherwise.
-    public func containsItem(for key: Key) async throws -> Bool {
-        try await data(for: key) != nil
+    public func containsItem(for key: Key) throws -> Bool {
+        try data(for: key) != nil
     }
 
     /// Creates an item with data associated with the given key. If an item
@@ -79,39 +83,39 @@ public struct Keychain {
         data: Data,
         for key: Key,
         withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly
-    ) async throws {
+    ) throws {
         // Rather than add and then update if add fails with errSecDuplicateItem,
         // we just delete then add.
 
         let delete = query(for: key)
-        try await SecItem.delete(query: delete)
+        try SecItem.delete(query: delete)
 
         let create = query(for: key)
             .adding(accessibility.attributes)
             .adding(key: kSecValueData, value: data)
             .adding(key: kSecUseDataProtectionKeychain, boolValue: true)
 
-        try await SecItem.add(attributes: create)
+        try SecItem.add(attributes: create)
     }
 
     /// Returns the data associated with the given key, or `nil` if no item
     /// is associated with the given key.
-    public func data(for key: Key) async throws -> Data? {
+    public func data(for key: Key) throws -> Data? {
         let query = query(for: key)
             .adding(key: kSecMatchLimit, value: kSecMatchLimitOne)
             .adding(key: kSecReturnData, boolValue: true)
 
-        return try await SecItem.copyMatching(query: query)
+        return try SecItem.copyMatching(query: query)
     }
 
     /// Returns a set of all keys associated with this service.
     public var allKeys: Set<Key> {
-        get async throws {
+        get throws {
             let query = queryForAll
                 .adding(key: kSecMatchLimit, value: kSecMatchLimitAll)
                 .adding(key: kSecReturnAttributes, boolValue: true)
 
-            guard let results: [[AnyHashable: Any]] = try await SecItem.copyMatching(query: query) else {
+            guard let results: [[AnyHashable: Any]] = try SecItem.copyMatching(query: query) else {
                 return []
             }
 
@@ -126,15 +130,15 @@ public struct Keychain {
     }
 
     /// Deletes the item associated with the specified key.
-    public func removeItem(for key: Key) async throws {
+    public func removeItem(for key: Key) throws {
         let query = query(for: key)
-        try await SecItem.delete(query: query)
+        try SecItem.delete(query: query)
     }
 
     /// Deletes all items associated with this service. Use with care.
-    public func removeAllItems() async throws {
+    public func removeAllItems() throws {
         let query = queryForAll
-        try await SecItem.delete(query: query)
+        try SecItem.delete(query: query)
     }
 }
 
@@ -144,16 +148,16 @@ public extension Keychain {
 
     /// Returns the string associated with the given key, or `nil` if no item
     /// is associated with the given key.
-    func string(for key: Key) async throws -> String? {
-        try await data(for: key).map {
+    func string(for key: Key) throws -> String? {
+        try data(for: key).map {
             String(decoding: $0, as: UTF8.self)
         }
     }
 
     /// Creates an item with a string associated with the given key. If an item
     /// already exists for the given key, it is first deleted then re-added.
-    func set(string: String, for key: Key, withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly) async throws {
-        try await set(data: Data(string.utf8), for: key, withAccessibility: accessibility)
+    func set(string: String, for key: Key, withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly) throws {
+        try set(data: Data(string.utf8), for: key, withAccessibility: accessibility)
     }
 }
 
@@ -163,8 +167,8 @@ public extension Keychain {
 
     /// Returns the `Decodable` value associated with the given key, or `nil` if no
     /// item is associated with the given key.
-    func value<T>(for key: Key) async throws -> T? where T: Decodable {
-        try await data(for: key).map {
+    func value<T>(for key: Key) throws -> T? where T: Decodable {
+        try data(for: key).map {
             try JSONDecoder().decode(T.self, from: $0)
         }
     }
@@ -172,7 +176,23 @@ public extension Keychain {
     /// Creates an item with a `Encodable value` associated with the given key.
     /// If an item already exists for the given key, it is first deleted then
     /// re-added.
-    func set<T>(value: T, for key: Key, withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly) async throws where T: Encodable {
-        try await set(data: try JSONEncoder().encode(value), for: key, withAccessibility: accessibility)
+    func set<T>(value: T, for key: Key, withAccessibility accessibility: Accessibility = .whenUnlockedThisDeviceOnly) throws where T: Encodable {
+        try set(data: try JSONEncoder().encode(value), for: key, withAccessibility: accessibility)
+    }
+}
+
+// MARK: - Default Keychain
+
+public extension Keychain {
+
+    /// Creates a `Keychain`, using `Bundle.main.bundleIdentifier` as the
+    /// service. If `Bundle.main.bundleIdentifier` is `nil`, a fatal error is
+    /// raised.
+    ///
+    static var `default`: Keychain {
+        guard let bundleID = Bundle.main.bundleIdentifier else {
+            fatalError("Cannot find main bundle identifier")
+        }
+        return Keychain(service: bundleID)
     }
 }

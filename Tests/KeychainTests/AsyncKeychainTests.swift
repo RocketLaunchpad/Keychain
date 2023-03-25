@@ -26,14 +26,14 @@
 @testable import Keychain
 import XCTest
 
-final class KeychainTests: XCTestCase {
-    private var keychain: Keychain!
+final class AsyncKeychainTests: XCTestCase {
+    private var keychain: AsyncKeychain!
 
     override func setUpWithError() throws {
         super.setUp()
 
         let service = "KeychainTests-\(UUID().uuidString)"
-        keychain = Keychain(service: service)
+        keychain = AsyncKeychain(service: service)
     }
 
     override func tearDown() async throws {
@@ -251,7 +251,7 @@ extension Key {
     static let aSecretValue: Key = "aSecretValue"
 }
 
-extension KeychainTests {
+extension AsyncKeychainTests {
 
     func testReadmeDemo1() async throws {
         // Write to the keychain
