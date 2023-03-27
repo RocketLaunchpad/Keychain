@@ -66,7 +66,7 @@ public struct AsyncKeychain {
     }
 
     /// Creates a new keychain instance using the specified service name.
-    init(service: String) {
+    public init(service: String) {
         self.keychain = Keychain(service: service)
     }
 
